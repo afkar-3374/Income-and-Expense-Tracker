@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cool Income & Expense Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Quicksand', sans-serif; }
+    body {
+      background: linear-gradient(to right top, #d4fc79, #96e6a1, #b0f3f1, #a1c4fd, #c2d9ff);
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 { color: #333; margin-bottom: 20px; font-size: 28px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      width: 100%;
+      max-width: 1200px;
+    }
+    .card {
+      background: rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(12px);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    }
+    h2 { margin-bottom: 15px; color: #444; }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-size: 14px;
+      color: #444;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      background: rgba(255,255,255,0.8);
+      margin-top: 5px;
+      font-size: 14px;
+    }
+    button {
+      margin-top: 10px;
+      padding: 10px;
+      width: 100%;
+      background: #6fc1ff;
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+    button:hover { background: #4ab1ff; }
+    .chart-box { max-width: 300px; margin: auto; }
+    ul { list-style: none; margin-top: 10px; max-height: 150px; overflow-y: auto; padding: 0; }
+    li {
+      background: rgba(255, 255, 255, 0.6);
+      padding: 8px 12px;
+      margin-bottom: 5px;
+      border-radius: 10px;
+      font-size: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 5px;
+    }
+    .delete-btn {
+      background: #ff6b6b;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .download-btn {
+      background: #a785f4;
+      margin-top: 10px;
+    }
+    @media (max-width: 768px) {
+      h1 { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+
+<h1>🌤️ Cool Income & Expense Tracker</h1>
+
+<div class="grid">
+  <div id="summaryBox" class="card">
+    <h2>📊 Summary</h2>
+    <p><strong>Today:</strong> Income ₹0 | Expense ₹0</p>
+    <p><strong>This Month:</strong> Income ₹0 | Expense ₹0</p>
+  </div>
+
+  <div class="card">
+    <h2>Dashboard</h2>
+    <div class="grid" style="gap: 10px;">
+      <div class="chart-box"><canvas id="incomeChart"></canvas></div>
+      <div class="chart-box"><canvas id="expenseChart"></canvas></div>
+    </div>
+    <button class="download-btn" onclick="downloadPDF()">📥 Download PDF</button>
+  </div>
+
+  <div class="card">
+    <h2>Add Income</h2>
+    <label>Amount</label><input type="number" id="incomeAmount">
+    <label>Date</label><input type="date" id="incomeDate">
+    <label>Source</label><input type="text" id="incomeSource">
+    <button onclick="addIncome()">Add Income</button>
+  </div>
+
+  <div class="card">
+    <h2>Add Expense</h2>
+    <label>Amount</label><input type="number" id="expenseAmount">
+    <label>Date</label><input type="date" id="expenseDate">
+    <label>Source</label><input type="text" id="expenseSource">
+    <button onclick="addExpense()">Add Expense</button>
+  </div>
+
+  <div class="card">
+    <h2>Income Entries</h2><ul id="incomeList"></ul>
+  </div>
+
+  <div class="card">
+    <h2>Expense Entries</h2><ul id="expenseList"></ul>
+  </div>
+</div>
+
+<script>
+  const incomeChart = new Chart(document.getElementById('incomeChart'), {
+    type: 'line',
+    data: { labels: [], datasets: [{ label: 'Income by Date', data: [], borderColor: '#67e8f9', backgroundColor: 'rgba(103,232,249,0.3)', tension: 0.4, fill: true }] },
+    options: { responsive: true, scales: { x: { title: { display: true, text: 'Date' } }, y: { beginAtZero: true, title: { display: true, text: 'Amount' } } } }
+  });
+
+  const expenseChart = new Chart(document.getElementById('expenseChart'), {
+    type: 'line',
+    data: { labels: [], datasets: [{ label: 'Expense by Date', data: [], borderColor: '#fcd34d', backgroundColor: 'rgba(252,211,77,0.3)', tension: 0.4, fill: true }] },
+    options: { responsive: true, scales: { x: { title: { display: true, text: 'Date' } }, y: { beginAtZero: true, title: { display: true, text: 'Amount' } } } }
+  });
+
+  function formatDate(dateStr) {
+    const d = new Date(dateStr);
+    return d.toISOString().split('T')[0];
+  }
+
+  function loadEntries() {
+    const incomeData = JSON.parse(localStorage.getItem('income') || '[]');
+    const expenseData = JSON.parse(localStorage.getItem('expense') || '[]');
+    const incomeList = document.getElementById('incomeList');
+    const expenseList = document.getElementById('expenseList');
+    incomeList.innerHTML = '';
+    expenseList.innerHTML = '';
+
+    const incomeMap = {}, expenseMap = {};
+    let today = new Date().toISOString().split('T')[0], month = today.slice(0, 7);
+    let todayIncome = 0, monthIncome = 0, todayExpense = 0, monthExpense = 0;
+
+    incomeData.forEach((e, i) => {
+      if (!incomeMap[e.date]) incomeMap[e.date] = 0;
+      incomeMap[e.date] += +e.amount;
+      if (e.date === today) todayIncome += +e.amount;
+      if (e.date.startsWith(month)) monthIncome += +e.amount;
+      incomeList.innerHTML += `<li>₹${e.amount} - ${e.date} - ${e.source}
+        <button class="delete-btn" onclick="deleteIncome(${i})">❌</button>
+        <button class="delete-btn" onclick="editIncome(${i})">✏️</button></li>`;
+    });
+
+    expenseData.forEach((e, i) => {
+      if (!expenseMap[e.date]) expenseMap[e.date] = 0;
+      expenseMap[e.date] += +e.amount;
+      if (e.date === today) todayExpense += +e.amount;
+      if (e.date.startsWith(month)) monthExpense += +e.amount;
+      expenseList.innerHTML += `<li>₹${e.amount} - ${e.date} - ${e.source}
+        <button class="delete-btn" onclick="deleteExpense(${i})">❌</button>
+        <button class="delete-btn" onclick="editExpense(${i})">✏️</button></li>`;
+    });
+
+    incomeChart.data.labels = Object.keys(incomeMap);
+    incomeChart.data.datasets[0].data = Object.values(incomeMap);
+    expenseChart.data.labels = Object.keys(expenseMap);
+    expenseChart.data.datasets[0].data = Object.values(expenseMap);
+    incomeChart.update(); expenseChart.update();
+
+    document.getElementById('summaryBox').innerHTML = `<h2>📊 Summary</h2>
+      <p><strong>Today:</strong> Income ₹${todayIncome} | Expense ₹${todayExpense}</p>
+      <p><strong>This Month:</strong> Income ₹${monthIncome} | Expense ₹${monthExpense}</p>`;
+  }
+
+  function addIncome() {
+    const a = document.getElementById('incomeAmount').value,
+          d = document.getElementById('incomeDate').value,
+          s = document.getElementById('incomeSource').value;
+    if (!a || !d || !s) return alert("Fill all fields");
+    const data = JSON.parse(localStorage.getItem('income') || '[]');
+    data.push({ amount: a, date: d, source: s });
+    localStorage.setItem('income', JSON.stringify(data));
+    loadEntries();
+  }
+
+  function addExpense() {
+    const a = document.getElementById('expenseAmount').value,
+          d = document.getElementById('expenseDate').value,
+          s = document.getElementById('expenseSource').value;
+    if (!a || !d || !s) return alert("Fill all fields");
+    const data = JSON.parse(localStorage.getItem('expense') || '[]');
+    data.push({ amount: a, date: d, source: s });
+    localStorage.setItem('expense', JSON.stringify(data));
+    loadEntries();
+  }
+
+  function deleteIncome(i) {
+    const d = JSON.parse(localStorage.getItem('income') || '[]');
+    d.splice(i, 1);
+    localStorage.setItem('income', JSON.stringify(d));
+    loadEntries();
+  }
+
+  function deleteExpense(i) {
+    const d = JSON.parse(localStorage.getItem('expense') || '[]');
+    d.splice(i, 1);
+    localStorage.setItem('expense', JSON.stringify(d));
+    loadEntries();
+  }
+
+  function editIncome(i) {
+    const d = JSON.parse(localStorage.getItem('income') || '[]');
+    const e = d[i];
+    const amount = prompt("Edit amount:", e.amount);
+    const date = prompt("Edit date:", e.date);
+    const source = prompt("Edit source:", e.source);
+    if (amount && date && source) {
+      d[i] = { amount, date, source };
+      localStorage.setItem('income', JSON.stringify(d));
+      loadEntries();
+    }
+  }
+
+  function editExpense(i) {
+    const d = JSON.parse(localStorage.getItem('expense') || '[]');
+    const e = d[i];
+    const amount = prompt("Edit amount:", e.amount);
+    const date = prompt("Edit date:", e.date);
+    const source = prompt("Edit source:", e.source);
+    if (amount && date && source) {
+      d[i] = { amount, date, source };
+      localStorage.setItem('expense', JSON.stringify(d));
+      loadEntries();
+    }
+  }
+
+  function downloadPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const income = JSON.parse(localStorage.getItem('income') || '[]');
+    const expense = JSON.parse(localStorage.getItem('expense') || '[]');
+    let y = 20;
+    doc.setFontSize(16);
+    doc.text("💡 Income & Expense Report", 20, y);
+    y += 10;
+    doc.setFontSize(12);
+    doc.text("Income:", 20, y); y += 8;
+    income.forEach(e => { doc.text(`₹${e.amount} - ${e.date} - ${e.source}`, 20, y); y += 6; });
+    y += 6;
+    doc.text("Expense:", 20, y); y += 8;
+    expense.forEach(e => { doc.text(`₹${e.amount} - ${e.date} - ${e.source}`, 20, y); y += 6; });
+    doc.save("Income-Expense-Report.pdf");
+  }
+
+  window.onload = loadEntries;
+</script>
+</body>
+</html>
