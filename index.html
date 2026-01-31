@@ -70,12 +70,35 @@ border-radius:26px;
 padding:22px;
 margin-bottom:18px;
 box-shadow:0 20px 40px rgba(0,0,0,.5);
+position:relative;
+overflow:hidden;
+}
+
+/* Pulse animation */
+.balance-card.pulse{
+animation:pulse .6s;
+}
+
+@keyframes pulse{
+0%{transform:scale(1)}
+50%{transform:scale(1.03)}
+100%{transform:scale(1)}
 }
 
 .balance{
-font-size:30px;
+font-size:32px;
 font-weight:700;
 margin:10px 0;
+letter-spacing:.5px;
+}
+
+/* Eye */
+.eye{
+position:absolute;
+right:18px;
+top:18px;
+cursor:pointer;
+font-size:18px;
 }
 
 /* CARD */
@@ -87,10 +110,6 @@ border-radius:22px;
 padding:18px;
 margin-bottom:15px;
 box-shadow:0 8px 20px rgba(0,0,0,.35);
-}
-
-.card h3{
-margin-bottom:12px;
 }
 
 /* FORM */
@@ -119,6 +138,11 @@ background:linear-gradient(135deg,#22c55e,#16a34a);
 color:#000;
 font-weight:600;
 cursor:pointer;
+transition:.15s;
+}
+
+button:active{
+transform:scale(.97);
 }
 
 /* LIST */
@@ -171,48 +195,6 @@ opacity:1;
 color:#22c55e;
 }
 
-/* CUSTOM SELECT */
-.custom-select{
-display:flex;
-justify-content:space-between;
-align-items:center;
-background:rgba(255,255,255,.06);
-border:1px solid rgba(255,255,255,.12);
-border-radius:14px;
-padding:12px;
-cursor:pointer;
-margin-bottom:6px;
-}
-
-.custom-select:hover{
-border-color:#22c55e;
-}
-
-.arrow{
-font-size:12px;
-opacity:.6;
-}
-
-.select-options{
-display:none;
-background:rgba(2,6,23,.95);
-border:1px solid rgba(255,255,255,.1);
-border-radius:14px;
-overflow:hidden;
-box-shadow:0 10px 25px rgba(0,0,0,.5);
-}
-
-.select-options div{
-padding:12px;
-font-size:13px;
-cursor:pointer;
-}
-
-.select-options div:hover{
-background:rgba(34,197,94,.15);
-color:#22c55e;
-}
-
 </style>
 </head>
 
@@ -228,9 +210,14 @@ color:#22c55e;
 <!-- HOME -->
 <div id="home" class="screen active">
 
-<div class="balance-card">
+<div id="balanceCard" class="balance-card">
+
+<div class="eye" onclick="toggleBalance()">👁</div>
+
 <h3>Total Balance</h3>
-<div class="balance" id="balance">₹0</div>
+
+<div id="balance" class="balance">₹ ••••</div>
+
 </div>
 
 <div class="card">
@@ -300,21 +287,8 @@ color:#22c55e;
 
 <h3>Reports</h3>
 
-<div class="custom-select" onclick="toggleSelect()">
-<span id="selectedText">Today</span>
-<span class="arrow">▼</span>
-</div>
-
-<div id="selectOptions" class="select-options">
-
-<div onclick="setReport('daily','Today')">Today</div>
-<div onclick="setReport('monthly','This Month')">This Month</div>
-<div onclick="setReport('all','All Time')">All Time</div>
-
-</div>
-
-<div id="reportBox" style="margin-top:15px;line-height:1.7">
-Select Report
+<div id="reportBox" style="line-height:1.7">
+Coming Soon
 </div>
 
 </div>
@@ -352,9 +326,7 @@ el.classList.add("active");
 
 /* CHART */
 
-const ctx=document.getElementById("mainChart");
-
-const chart=new Chart(ctx,{
+const chart=new Chart(mainChart,{
 type:"line",
 data:{
 labels:[],
@@ -363,37 +335,25 @@ datasets:[
 {label:"Expense",data:[],borderColor:"#ef4444",tension:.4}
 ]
 },
-options:{responsive:true,plugins:{legend:{display:false}}}
+options:{
+responsive:true,
+plugins:{legend:{display:false}}
+}
 });
 
-/* CUSTOM SELECT */
+/* STATE */
 
-let selectOpen=false;
-let currentReport="daily";
+let showBalance=false;
 
-function toggleSelect(){
+/* TOGGLE BALANCE */
 
-const box=document.getElementById("selectOptions");
+function toggleBalance(){
 
-selectOpen=!selectOpen;
-
-box.style.display=selectOpen?"block":"none";
+showBalance=!showBalance;
+updateBalance();
 }
 
-function setReport(val,text){
-
-currentReport=val;
-
-selectedText.innerText=text;
-
-selectOptions.style.display="none";
-
-selectOpen=false;
-
-loadReport();
-}
-
-/* DATA */
+/* LOAD */
 
 function loadData(){
 
@@ -401,7 +361,7 @@ let income=JSON.parse(localStorage.getItem("income")||"[]");
 let expense=JSON.parse(localStorage.getItem("expense")||"[]");
 
 let map={};
-let balance=0;
+let total=0;
 
 incomeList.innerHTML="";
 expenseList.innerHTML="";
@@ -413,7 +373,7 @@ income.forEach(e=>{
 if(!map[e.date]) map[e.date]={i:0,e:0};
 
 map[e.date].i+=Number(e.amount);
-balance+=Number(e.amount);
+total+=Number(e.amount);
 
 incomeList.innerHTML+=`
 <li><span>${e.source}</span>
@@ -427,16 +387,18 @@ expense.forEach(e=>{
 if(!map[e.date]) map[e.date]={i:0,e:0};
 
 map[e.date].e+=Number(e.amount);
-balance-=Number(e.amount);
+total-=Number(e.amount);
 
 expenseList.innerHTML+=`
 <li><span>${e.source}</span>
 <b class="red">-₹${e.amount}</b></li>`;
 });
 
-/* BALANCE */
+/* UPDATE BALANCE */
 
-balance.innerText="₹"+balance;
+window.currentBalance=total;
+
+updateBalance();
 
 /* CHART */
 
@@ -448,7 +410,32 @@ chart.data.datasets[1].data=labels.map(d=>map[d].e);
 
 chart.update();
 
-loadReport();
+}
+
+/* UPDATE BALANCE */
+
+function updateBalance(){
+
+const el=document.getElementById("balance");
+
+if(showBalance){
+el.innerText="₹ "+currentBalance.toLocaleString();
+}else{
+el.innerText="₹ ••••";
+}
+}
+
+/* ANIMATE BALANCE */
+
+function animateBalance(){
+
+const card=document.getElementById("balanceCard");
+
+card.classList.add("pulse");
+
+setTimeout(()=>{
+card.classList.remove("pulse");
+},600);
 }
 
 /* ADD */
@@ -460,13 +447,17 @@ if(!incomeAmount.value||!incomeDate.value) return;
 let d=JSON.parse(localStorage.getItem("income")||"[]");
 
 d.push({
-amount:incomeAmount.value,
+amount:Number(incomeAmount.value),
 date:incomeDate.value,
-source:incomeSource.value
+source:incomeSource.value||"Income"
 });
 
 localStorage.setItem("income",JSON.stringify(d));
 
+incomeAmount.value="";
+incomeSource.value="";
+
+animateBalance();
 loadData();
 }
 
@@ -477,57 +468,18 @@ if(!expenseAmount.value||!expenseDate.value) return;
 let d=JSON.parse(localStorage.getItem("expense")||"[]");
 
 d.push({
-amount:expenseAmount.value,
+amount:Number(expenseAmount.value),
 date:expenseDate.value,
-source:expenseSource.value
+source:expenseSource.value||"Expense"
 });
 
 localStorage.setItem("expense",JSON.stringify(d));
 
+expenseAmount.value="";
+expenseSource.value="";
+
+animateBalance();
 loadData();
-}
-
-/* REPORT */
-
-function loadReport(){
-
-let income=JSON.parse(localStorage.getItem("income")||"[]");
-let expense=JSON.parse(localStorage.getItem("expense")||"[]");
-
-let today=new Date().toISOString().slice(0,10);
-let month=today.slice(0,7);
-
-let iTotal=0,eTotal=0;
-
-income.forEach(e=>{
-
-if(
-(currentReport==="daily" && e.date===today)||
-(currentReport==="monthly" && e.date.startsWith(month))||
-(currentReport==="all")
-){
-iTotal+=Number(e.amount);
-}
-});
-
-expense.forEach(e=>{
-
-if(
-(currentReport==="daily" && e.date===today)||
-(currentReport==="monthly" && e.date.startsWith(month))||
-(currentReport==="all")
-){
-eTotal+=Number(e.amount);
-}
-});
-
-let bal=iTotal-eTotal;
-
-reportBox.innerHTML=`
-Income : ₹${iTotal}<br>
-Expense : ₹${eTotal}<br>
-Balance : ₹${bal}
-`;
 }
 
 /* INIT */
@@ -538,4 +490,3 @@ window.onload=loadData;
 
 </body>
 </html>
-  
