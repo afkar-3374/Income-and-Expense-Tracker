@@ -1,283 +1,541 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Cool Income & Expense Tracker</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Quicksand', sans-serif; }
-    body {
-      background: linear-gradient(to right top, #d4fc79, #96e6a1, #b0f3f1, #a1c4fd, #c2d9ff);
-      min-height: 100vh;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    h1 { color: #333; margin-bottom: 20px; font-size: 28px; }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 20px;
-      width: 100%;
-      max-width: 1200px;
-    }
-    .card {
-      background: rgba(255, 255, 255, 0.4);
-      backdrop-filter: blur(12px);
-      border-radius: 20px;
-      padding: 20px;
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-    }
-    h2 { margin-bottom: 15px; color: #444; }
-    label {
-      display: block;
-      margin-top: 10px;
-      font-size: 14px;
-      color: #444;
-    }
-    input {
-      width: 100%;
-      padding: 10px;
-      border-radius: 10px;
-      border: none;
-      background: rgba(255,255,255,0.8);
-      margin-top: 5px;
-      font-size: 14px;
-    }
-    button {
-      margin-top: 10px;
-      padding: 10px;
-      width: 100%;
-      background: #6fc1ff;
-      color: white;
-      font-weight: bold;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-    }
-    button:hover { background: #4ab1ff; }
-    .chart-box { max-width: 300px; margin: auto; }
-    ul { list-style: none; margin-top: 10px; max-height: 150px; overflow-y: auto; padding: 0; }
-    li {
-      background: rgba(255, 255, 255, 0.6);
-      padding: 8px 12px;
-      margin-bottom: 5px;
-      border-radius: 10px;
-      font-size: 14px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 5px;
-    }
-    .delete-btn {
-      background: #ff6b6b;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      padding: 4px 8px;
-      font-size: 12px;
-      cursor: pointer;
-    }
-    .download-btn {
-      background: #a785f4;
-      margin-top: 10px;
-    }
-    @media (max-width: 768px) {
-      h1 { font-size: 22px; }
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Finzo Pro</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+/* RESET */
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:"Inter",sans-serif;
+}
+
+/* BODY */
+body{
+min-height:100vh;
+background:radial-gradient(circle at top,#0f172a,#020617 70%);
+color:#fff;
+padding:15px;
+}
+
+/* APP */
+.app{
+max-width:420px;
+margin:auto;
+min-height:100vh;
+display:flex;
+flex-direction:column;
+}
+
+/* HEADER */
+header{
+margin-bottom:15px;
+}
+
+header h1{
+font-size:26px;
+font-weight:700;
+}
+
+header p{
+font-size:13px;
+opacity:.6;
+}
+
+/* SCREEN */
+.screen{
+flex:1;
+display:none;
+overflow-y:auto;
+padding-bottom:15px;
+}
+
+.screen.active{
+display:block;
+}
+
+/* BALANCE CARD */
+.balance-card{
+background:linear-gradient(135deg,#22c55e,#06b6d4);
+color:#000;
+border-radius:26px;
+padding:22px;
+margin-bottom:18px;
+box-shadow:0 20px 40px rgba(0,0,0,.5);
+}
+
+.balance{
+font-size:30px;
+font-weight:700;
+margin:10px 0;
+}
+
+/* CARD */
+.card{
+background:rgba(255,255,255,.05);
+backdrop-filter:blur(18px);
+border:1px solid rgba(255,255,255,.1);
+border-radius:22px;
+padding:18px;
+margin-bottom:15px;
+box-shadow:0 8px 20px rgba(0,0,0,.35);
+}
+
+.card h3{
+margin-bottom:12px;
+}
+
+/* FORM */
+input{
+width:100%;
+background:rgba(255,255,255,.07);
+border:1px solid rgba(255,255,255,.15);
+border-radius:14px;
+padding:12px;
+color:#fff;
+margin:6px 0 12px;
+}
+
+input:focus{
+outline:none;
+border-color:#22c55e;
+}
+
+/* BUTTON */
+button{
+width:100%;
+padding:12px;
+border:none;
+border-radius:16px;
+background:linear-gradient(135deg,#22c55e,#16a34a);
+color:#000;
+font-weight:600;
+cursor:pointer;
+}
+
+/* LIST */
+ul{
+list-style:none;
+max-height:220px;
+overflow:auto;
+}
+
+li{
+background:rgba(255,255,255,.06);
+padding:12px;
+border-radius:12px;
+margin-bottom:6px;
+display:flex;
+justify-content:space-between;
+font-size:13px;
+}
+
+.green{color:#22c55e}
+.red{color:#ef4444}
+
+/* CHART */
+.chart-box{
+height:220px;
+}
+
+/* NAV */
+nav{
+display:flex;
+background:rgba(2,6,23,.95);
+border-radius:22px;
+padding:6px;
+margin-top:8px;
+}
+
+nav div{
+flex:1;
+text-align:center;
+padding:10px 0;
+font-size:13px;
+border-radius:16px;
+opacity:.5;
+cursor:pointer;
+}
+
+nav .active{
+background:rgba(34,197,94,.15);
+opacity:1;
+color:#22c55e;
+}
+
+/* CUSTOM SELECT */
+.custom-select{
+display:flex;
+justify-content:space-between;
+align-items:center;
+background:rgba(255,255,255,.06);
+border:1px solid rgba(255,255,255,.12);
+border-radius:14px;
+padding:12px;
+cursor:pointer;
+margin-bottom:6px;
+}
+
+.custom-select:hover{
+border-color:#22c55e;
+}
+
+.arrow{
+font-size:12px;
+opacity:.6;
+}
+
+.select-options{
+display:none;
+background:rgba(2,6,23,.95);
+border:1px solid rgba(255,255,255,.1);
+border-radius:14px;
+overflow:hidden;
+box-shadow:0 10px 25px rgba(0,0,0,.5);
+}
+
+.select-options div{
+padding:12px;
+font-size:13px;
+cursor:pointer;
+}
+
+.select-options div:hover{
+background:rgba(34,197,94,.15);
+color:#22c55e;
+}
+
+</style>
 </head>
+
 <body>
 
-<h1>🌤️ Cool Income & Expense Tracker</h1>
+<div class="app">
 
-<div class="grid">
-  <div id="summaryBox" class="card">
-    <h2>📊 Summary</h2>
-    <p><strong>Today:</strong> Income ₹0 | Expense ₹0</p>
-    <p><strong>This Month:</strong> Income ₹0 | Expense ₹0</p>
-  </div>
+<header>
+<h1>Finzo Pro</h1>
+<p>Smart Finance Manager</p>
+</header>
 
-  <div class="card">
-    <h2>Dashboard</h2>
-    <div class="grid" style="gap: 10px;">
-      <div class="chart-box"><canvas id="incomeChart"></canvas></div>
-      <div class="chart-box"><canvas id="expenseChart"></canvas></div>
-    </div>
-    <button class="download-btn" onclick="downloadPDF()">📥 Download PDF</button>
-  </div>
+<!-- HOME -->
+<div id="home" class="screen active">
 
-  <div class="card">
-    <h2>Add Income</h2>
-    <label>Amount</label><input type="number" id="incomeAmount">
-    <label>Date</label><input type="date" id="incomeDate">
-    <label>Source</label><input type="text" id="incomeSource">
-    <button onclick="addIncome()">Add Income</button>
-  </div>
+<div class="balance-card">
+<h3>Total Balance</h3>
+<div class="balance" id="balance">₹0</div>
+</div>
 
-  <div class="card">
-    <h2>Add Expense</h2>
-    <label>Amount</label><input type="number" id="expenseAmount">
-    <label>Date</label><input type="date" id="expenseDate">
-    <label>Source</label><input type="text" id="expenseSource">
-    <button onclick="addExpense()">Add Expense</button>
-  </div>
+<div class="card">
 
-  <div class="card">
-    <h2>Income Entries</h2><ul id="incomeList"></ul>
-  </div>
+<h3>Analytics</h3>
 
-  <div class="card">
-    <h2>Expense Entries</h2><ul id="expenseList"></ul>
-  </div>
+<div class="chart-box">
+<canvas id="mainChart"></canvas>
+</div>
+
+</div>
+
+</div>
+
+<!-- INCOME -->
+<div id="income" class="screen">
+
+<div class="card">
+
+<h3>Add Income</h3>
+
+<input type="number" id="incomeAmount" placeholder="Amount">
+<input type="date" id="incomeDate">
+<input type="text" id="incomeSource" placeholder="Source">
+
+<button onclick="addIncome()">Save Income</button>
+
+</div>
+
+<div class="card">
+
+<h3>Income History</h3>
+<ul id="incomeList"></ul>
+
+</div>
+
+</div>
+
+<!-- EXPENSE -->
+<div id="expense" class="screen">
+
+<div class="card">
+
+<h3>Add Expense</h3>
+
+<input type="number" id="expenseAmount" placeholder="Amount">
+<input type="date" id="expenseDate">
+<input type="text" id="expenseSource" placeholder="Source">
+
+<button onclick="addExpense()">Save Expense</button>
+
+</div>
+
+<div class="card">
+
+<h3>Expense History</h3>
+<ul id="expenseList"></ul>
+
+</div>
+
+</div>
+
+<!-- REPORT -->
+<div id="report" class="screen">
+
+<div class="card">
+
+<h3>Reports</h3>
+
+<div class="custom-select" onclick="toggleSelect()">
+<span id="selectedText">Today</span>
+<span class="arrow">▼</span>
+</div>
+
+<div id="selectOptions" class="select-options">
+
+<div onclick="setReport('daily','Today')">Today</div>
+<div onclick="setReport('monthly','This Month')">This Month</div>
+<div onclick="setReport('all','All Time')">All Time</div>
+
+</div>
+
+<div id="reportBox" style="margin-top:15px;line-height:1.7">
+Select Report
+</div>
+
+</div>
+
+</div>
+
+<!-- NAV -->
+<nav>
+
+<div class="active" onclick="openTab('home',this)">Home</div>
+<div onclick="openTab('income',this)">Income</div>
+<div onclick="openTab('expense',this)">Expense</div>
+<div onclick="openTab('report',this)">Report</div>
+
+</nav>
+
 </div>
 
 <script>
-  const incomeChart = new Chart(document.getElementById('incomeChart'), {
-    type: 'line',
-    data: { labels: [], datasets: [{ label: 'Income by Date', data: [], borderColor: '#67e8f9', backgroundColor: 'rgba(103,232,249,0.3)', tension: 0.4, fill: true }] },
-    options: { responsive: true, scales: { x: { title: { display: true, text: 'Date' } }, y: { beginAtZero: true, title: { display: true, text: 'Amount' } } } }
-  });
 
-  const expenseChart = new Chart(document.getElementById('expenseChart'), {
-    type: 'line',
-    data: { labels: [], datasets: [{ label: 'Expense by Date', data: [], borderColor: '#fcd34d', backgroundColor: 'rgba(252,211,77,0.3)', tension: 0.4, fill: true }] },
-    options: { responsive: true, scales: { x: { title: { display: true, text: 'Date' } }, y: { beginAtZero: true, title: { display: true, text: 'Amount' } } } }
-  });
+/* NAV */
 
-  function formatDate(dateStr) {
-    const d = new Date(dateStr);
-    return d.toISOString().split('T')[0];
-  }
+function openTab(id,el){
 
-  function loadEntries() {
-    const incomeData = JSON.parse(localStorage.getItem('income') || '[]');
-    const expenseData = JSON.parse(localStorage.getItem('expense') || '[]');
-    const incomeList = document.getElementById('incomeList');
-    const expenseList = document.getElementById('expenseList');
-    incomeList.innerHTML = '';
-    expenseList.innerHTML = '';
+document.querySelectorAll(".screen")
+.forEach(s=>s.classList.remove("active"));
 
-    const incomeMap = {}, expenseMap = {};
-    let today = new Date().toISOString().split('T')[0], month = today.slice(0, 7);
-    let todayIncome = 0, monthIncome = 0, todayExpense = 0, monthExpense = 0;
+document.getElementById(id).classList.add("active");
 
-    incomeData.forEach((e, i) => {
-      if (!incomeMap[e.date]) incomeMap[e.date] = 0;
-      incomeMap[e.date] += +e.amount;
-      if (e.date === today) todayIncome += +e.amount;
-      if (e.date.startsWith(month)) monthIncome += +e.amount;
-      incomeList.innerHTML += `<li>₹${e.amount} - ${e.date} - ${e.source}
-        <button class="delete-btn" onclick="deleteIncome(${i})">❌</button>
-        <button class="delete-btn" onclick="editIncome(${i})">✏️</button></li>`;
-    });
+document.querySelectorAll("nav div")
+.forEach(n=>n.classList.remove("active"));
 
-    expenseData.forEach((e, i) => {
-      if (!expenseMap[e.date]) expenseMap[e.date] = 0;
-      expenseMap[e.date] += +e.amount;
-      if (e.date === today) todayExpense += +e.amount;
-      if (e.date.startsWith(month)) monthExpense += +e.amount;
-      expenseList.innerHTML += `<li>₹${e.amount} - ${e.date} - ${e.source}
-        <button class="delete-btn" onclick="deleteExpense(${i})">❌</button>
-        <button class="delete-btn" onclick="editExpense(${i})">✏️</button></li>`;
-    });
+el.classList.add("active");
+}
 
-    incomeChart.data.labels = Object.keys(incomeMap);
-    incomeChart.data.datasets[0].data = Object.values(incomeMap);
-    expenseChart.data.labels = Object.keys(expenseMap);
-    expenseChart.data.datasets[0].data = Object.values(expenseMap);
-    incomeChart.update(); expenseChart.update();
+/* CHART */
 
-    document.getElementById('summaryBox').innerHTML = `<h2>📊 Summary</h2>
-      <p><strong>Today:</strong> Income ₹${todayIncome} | Expense ₹${todayExpense}</p>
-      <p><strong>This Month:</strong> Income ₹${monthIncome} | Expense ₹${monthExpense}</p>`;
-  }
+const ctx=document.getElementById("mainChart");
 
-  function addIncome() {
-    const a = document.getElementById('incomeAmount').value,
-          d = document.getElementById('incomeDate').value,
-          s = document.getElementById('incomeSource').value;
-    if (!a || !d || !s) return alert("Fill all fields");
-    const data = JSON.parse(localStorage.getItem('income') || '[]');
-    data.push({ amount: a, date: d, source: s });
-    localStorage.setItem('income', JSON.stringify(data));
-    loadEntries();
-  }
+const chart=new Chart(ctx,{
+type:"line",
+data:{
+labels:[],
+datasets:[
+{label:"Income",data:[],borderColor:"#22c55e",tension:.4},
+{label:"Expense",data:[],borderColor:"#ef4444",tension:.4}
+]
+},
+options:{responsive:true,plugins:{legend:{display:false}}}
+});
 
-  function addExpense() {
-    const a = document.getElementById('expenseAmount').value,
-          d = document.getElementById('expenseDate').value,
-          s = document.getElementById('expenseSource').value;
-    if (!a || !d || !s) return alert("Fill all fields");
-    const data = JSON.parse(localStorage.getItem('expense') || '[]');
-    data.push({ amount: a, date: d, source: s });
-    localStorage.setItem('expense', JSON.stringify(data));
-    loadEntries();
-  }
+/* CUSTOM SELECT */
 
-  function deleteIncome(i) {
-    const d = JSON.parse(localStorage.getItem('income') || '[]');
-    d.splice(i, 1);
-    localStorage.setItem('income', JSON.stringify(d));
-    loadEntries();
-  }
+let selectOpen=false;
+let currentReport="daily";
 
-  function deleteExpense(i) {
-    const d = JSON.parse(localStorage.getItem('expense') || '[]');
-    d.splice(i, 1);
-    localStorage.setItem('expense', JSON.stringify(d));
-    loadEntries();
-  }
+function toggleSelect(){
 
-  function editIncome(i) {
-    const d = JSON.parse(localStorage.getItem('income') || '[]');
-    const e = d[i];
-    const amount = prompt("Edit amount:", e.amount);
-    const date = prompt("Edit date:", e.date);
-    const source = prompt("Edit source:", e.source);
-    if (amount && date && source) {
-      d[i] = { amount, date, source };
-      localStorage.setItem('income', JSON.stringify(d));
-      loadEntries();
-    }
-  }
+const box=document.getElementById("selectOptions");
 
-  function editExpense(i) {
-    const d = JSON.parse(localStorage.getItem('expense') || '[]');
-    const e = d[i];
-    const amount = prompt("Edit amount:", e.amount);
-    const date = prompt("Edit date:", e.date);
-    const source = prompt("Edit source:", e.source);
-    if (amount && date && source) {
-      d[i] = { amount, date, source };
-      localStorage.setItem('expense', JSON.stringify(d));
-      loadEntries();
-    }
-  }
+selectOpen=!selectOpen;
 
-  function downloadPDF() {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    const income = JSON.parse(localStorage.getItem('income') || '[]');
-    const expense = JSON.parse(localStorage.getItem('expense') || '[]');
-    let y = 20;
-    doc.setFontSize(16);
-    doc.text("💡 Income & Expense Report", 20, y);
-    y += 10;
-    doc.setFontSize(12);
-    doc.text("Income:", 20, y); y += 8;
-    income.forEach(e => { doc.text(`₹${e.amount} - ${e.date} - ${e.source}`, 20, y); y += 6; });
-    y += 6;
-    doc.text("Expense:", 20, y); y += 8;
-    expense.forEach(e => { doc.text(`₹${e.amount} - ${e.date} - ${e.source}`, 20, y); y += 6; });
-    doc.save("Income-Expense-Report.pdf");
-  }
+box.style.display=selectOpen?"block":"none";
+}
 
-  window.onload = loadEntries;
+function setReport(val,text){
+
+currentReport=val;
+
+selectedText.innerText=text;
+
+selectOptions.style.display="none";
+
+selectOpen=false;
+
+loadReport();
+}
+
+/* DATA */
+
+function loadData(){
+
+let income=JSON.parse(localStorage.getItem("income")||"[]");
+let expense=JSON.parse(localStorage.getItem("expense")||"[]");
+
+let map={};
+let balance=0;
+
+incomeList.innerHTML="";
+expenseList.innerHTML="";
+
+/* INCOME */
+
+income.forEach(e=>{
+
+if(!map[e.date]) map[e.date]={i:0,e:0};
+
+map[e.date].i+=Number(e.amount);
+balance+=Number(e.amount);
+
+incomeList.innerHTML+=`
+<li><span>${e.source}</span>
+<b class="green">+₹${e.amount}</b></li>`;
+});
+
+/* EXPENSE */
+
+expense.forEach(e=>{
+
+if(!map[e.date]) map[e.date]={i:0,e:0};
+
+map[e.date].e+=Number(e.amount);
+balance-=Number(e.amount);
+
+expenseList.innerHTML+=`
+<li><span>${e.source}</span>
+<b class="red">-₹${e.amount}</b></li>`;
+});
+
+/* BALANCE */
+
+balance.innerText="₹"+balance;
+
+/* CHART */
+
+let labels=Object.keys(map).sort();
+
+chart.data.labels=labels;
+chart.data.datasets[0].data=labels.map(d=>map[d].i);
+chart.data.datasets[1].data=labels.map(d=>map[d].e);
+
+chart.update();
+
+loadReport();
+}
+
+/* ADD */
+
+function addIncome(){
+
+if(!incomeAmount.value||!incomeDate.value) return;
+
+let d=JSON.parse(localStorage.getItem("income")||"[]");
+
+d.push({
+amount:incomeAmount.value,
+date:incomeDate.value,
+source:incomeSource.value
+});
+
+localStorage.setItem("income",JSON.stringify(d));
+
+loadData();
+}
+
+function addExpense(){
+
+if(!expenseAmount.value||!expenseDate.value) return;
+
+let d=JSON.parse(localStorage.getItem("expense")||"[]");
+
+d.push({
+amount:expenseAmount.value,
+date:expenseDate.value,
+source:expenseSource.value
+});
+
+localStorage.setItem("expense",JSON.stringify(d));
+
+loadData();
+}
+
+/* REPORT */
+
+function loadReport(){
+
+let income=JSON.parse(localStorage.getItem("income")||"[]");
+let expense=JSON.parse(localStorage.getItem("expense")||"[]");
+
+let today=new Date().toISOString().slice(0,10);
+let month=today.slice(0,7);
+
+let iTotal=0,eTotal=0;
+
+income.forEach(e=>{
+
+if(
+(currentReport==="daily" && e.date===today)||
+(currentReport==="monthly" && e.date.startsWith(month))||
+(currentReport==="all")
+){
+iTotal+=Number(e.amount);
+}
+});
+
+expense.forEach(e=>{
+
+if(
+(currentReport==="daily" && e.date===today)||
+(currentReport==="monthly" && e.date.startsWith(month))||
+(currentReport==="all")
+){
+eTotal+=Number(e.amount);
+}
+});
+
+let bal=iTotal-eTotal;
+
+reportBox.innerHTML=`
+Income : ₹${iTotal}<br>
+Expense : ₹${eTotal}<br>
+Balance : ₹${bal}
+`;
+}
+
+/* INIT */
+
+window.onload=loadData;
+
 </script>
+
 </body>
 </html>
+  
